@@ -97,7 +97,7 @@ if ($result) {
     $hasWarning = false;
     $hasFailed  = false;
 
-    // Evaluate parameters with the same thresholds you already use
+    // Evaluate parameters (REMOVED: residual_chlorine, cadmium, arsenic, nitrate)
     $v = $toFloat($primary['color']);
     if ($v !== null && $v > 15) $hasFailed = true;
 
@@ -110,20 +110,8 @@ if ($result) {
     $v = $toFloat($primary['tds']);
     if ($v !== null && $v > 500) $hasWarning = true;
 
-    $v = $toFloat($primary['residual_chlorine']);
-    if ($v !== null && ($v < 0.2 || $v > 1.0)) $hasFailed = true;
-
     $v = $toFloat($primary['lead']);
     if ($v !== null && $v > 0.01) $hasFailed = true;
-
-    $v = $toFloat($primary['cadmium']);
-    if ($v !== null && $v > 0.003) $hasFailed = true;
-
-    $v = $toFloat($primary['arsenic']);
-    if ($v !== null && $v > 0.01) $hasFailed = true;
-
-    $v = $toFloat($primary['nitrate']);
-    if ($v !== null && $v > 50) $hasFailed = true;
 
     // Decide summary text / color (matches your requested wording)
     if ($hasFailed) {
@@ -265,11 +253,7 @@ function badge($text, $type = "safe") {
             <tr><td>pH</td><td><?= htmlspecialchars($result['ph_level']) ?></td><td><?= badge(($result['ph_level'] >= 6.5 && $result['ph_level'] <= 8.5) ? "Neutral" : "Failed", ($result['ph_level'] >= 6.5 && $result['ph_level'] <= 8.5) ? "neutral" : "failed") ?></td></tr>
             <tr><td>Turbidity (NTU)</td><td><?= htmlspecialchars($result['turbidity']) ?></td><td><?= badge(($result['turbidity'] <= 5) ? "Safe" : "Warning", ($result['turbidity'] <= 5) ? "safe" : "warning") ?></td></tr>
             <tr><td>TDS (ppm)</td><td><?= htmlspecialchars($result['tds']) ?></td><td><?= badge(($result['tds'] <= 500) ? "Safe" : "Warning", ($result['tds'] <= 500) ? "safe" : "warning") ?></td></tr>
-            <tr><td>Residual Chlorine (mg/L)</td><td><?= htmlspecialchars($result['residual_chlorine']) ?></td><td><?= badge(($result['residual_chlorine'] >= 0.2 && $result['residual_chlorine'] <= 1.0) ? "Safe" : "Failed", ($result['residual_chlorine'] >= 0.2 && $result['residual_chlorine'] <= 1.0) ? "safe" : "failed") ?></td></tr>
             <tr><td>Lead (mg/L)</td><td><?= htmlspecialchars($result['lead']) ?></td><td><?= badge(($result['lead'] <= 0.01) ? "Safe" : "Failed", ($result['lead'] <= 0.01) ? "safe" : "failed") ?></td></tr>
-            <tr><td>Cadmium (mg/L)</td><td><?= htmlspecialchars($result['cadmium']) ?></td><td><?= badge(($result['cadmium'] <= 0.003) ? "Safe" : "Failed", ($result['cadmium'] <= 0.003) ? "safe" : "failed") ?></td></tr>
-            <tr><td>Arsenic (mg/L)</td><td><?= htmlspecialchars($result['arsenic']) ?></td><td><?= badge(($result['arsenic'] <= 0.01) ? "Safe" : "Failed", ($result['arsenic'] <= 0.01) ? "safe" : "failed") ?></td></tr>
-            <tr><td>Nitrate (mg/L)</td><td><?= htmlspecialchars($result['nitrate']) ?></td><td><?= badge(($result['nitrate'] <= 50) ? "Safe" : "Failed", ($result['nitrate'] <= 50) ? "safe" : "failed") ?></td></tr>
           </tbody>
         </table>
       <?php endif; ?>
