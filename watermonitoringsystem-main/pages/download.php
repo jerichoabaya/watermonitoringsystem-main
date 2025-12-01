@@ -97,21 +97,36 @@ if ($result) {
     $hasWarning = false;
     $hasFailed  = false;
 
-    // Evaluate parameters (REMOVED: residual_chlorine, cadmium, arsenic, nitrate)
+    // Check each parameter against new thresholds
     $v = $toFloat($primary['color']);
-    if ($v !== null && $v > 15) $hasFailed = true;
+    if ($v !== null) {
+        if ($v == 10.00) $hasWarning = true;
+        elseif ($v > 10.00) $hasFailed = true;
+    }
 
     $v = $toFloat($primary['ph_level']);
-    if ($v !== null && ($v < 6.5 || $v > 8.5)) $hasFailed = true;
+    if ($v !== null) {
+        if ($v == 7) $hasWarning = true;
+        elseif ($v < 5 || $v > 7) $hasFailed = true;
+    }
 
     $v = $toFloat($primary['turbidity']);
-    if ($v !== null && $v > 5) $hasWarning = true;
+    if ($v !== null) {
+        if ($v == 5) $hasWarning = true;
+        elseif ($v > 5) $hasFailed = true;
+    }
 
     $v = $toFloat($primary['tds']);
-    if ($v !== null && $v > 500) $hasWarning = true;
+    if ($v !== null) {
+        if ($v == 10) $hasWarning = true;
+        elseif ($v > 10) $hasFailed = true;
+    }
 
     $v = $toFloat($primary['lead']);
-    if ($v !== null && $v > 0.01) $hasFailed = true;
+    if ($v !== null) {
+        if ($v == 0.01) $hasWarning = true;
+        elseif ($v > 0.01) $hasFailed = true;
+    }
 
     // Decide summary text / color (matches your requested wording)
     if ($hasFailed) {
@@ -130,6 +145,51 @@ if ($result) {
 }
 
 // --- Helper function for status badge ---
+function getParameterStatus($parameter, $value) {
+    $value = is_numeric($value) || $value === '0' || $value === 0 ? (float)$value : null;
+    
+    if ($value === null) return ['status' => 'unknown', 'text' => 'Unknown'];
+    
+    switch ($parameter) {
+        case 'color':
+            if ($value < 9) return ['status' => 'safe', 'text' => 'Safe'];
+            if ($value >= 9 && $value < 10) return ['status' => 'neutral', 'text' => 'Neutral'];
+            if ($value == 10.00) return ['status' => 'warning', 'text' => 'Warning'];
+            if ($value > 10.00) return ['status' => 'failed', 'text' => 'Failed'];
+            break;
+            
+        case 'ph_level':
+            if ($value >= 5 && $value < 6) return ['status' => 'safe', 'text' => 'Safe'];
+            if ($value >= 6 && $value < 7) return ['status' => 'neutral', 'text' => 'Neutral'];
+            if ($value == 7) return ['status' => 'warning', 'text' => 'Warning'];
+            if ($value < 5 || $value > 7) return ['status' => 'failed', 'text' => 'Failed'];
+            break;
+            
+        case 'turbidity':
+            if ($value < 4) return ['status' => 'safe', 'text' => 'Safe'];
+            if ($value >= 4 && $value < 5) return ['status' => 'neutral', 'text' => 'Neutral'];
+            if ($value == 5) return ['status' => 'warning', 'text' => 'Warning'];
+            if ($value > 5) return ['status' => 'failed', 'text' => 'Failed'];
+            break;
+            
+        case 'tds':
+            if ($value < 9) return ['status' => 'safe', 'text' => 'Safe'];
+            if ($value >= 9 && $value < 10) return ['status' => 'neutral', 'text' => 'Neutral'];
+            if ($value == 10) return ['status' => 'warning', 'text' => 'Warning'];
+            if ($value > 10) return ['status' => 'failed', 'text' => 'Failed'];
+            break;
+            
+        case 'lead':
+            if ($value < 0.009) return ['status' => 'safe', 'text' => 'Safe'];
+            if ($value >= 0.009 && $value < 0.01) return ['status' => 'neutral', 'text' => 'Neutral'];
+            if ($value == 0.01) return ['status' => 'warning', 'text' => 'Warning'];
+            if ($value > 0.01) return ['status' => 'failed', 'text' => 'Failed'];
+            break;
+    }
+    
+    return ['status' => 'unknown', 'text' => 'Unknown'];
+}
+
 function badge($text, $type = "safe") {
     $class = "badge-" . strtolower($type);
     return "<span class='badge $class'>$text</span>";
@@ -168,6 +228,7 @@ function badge($text, $type = "safe") {
     .badge-neutral { background: #28a745; }
     .badge-warning { background: #ff8800; }
     .badge-failed { background: #dc3545; }
+    .badge-unknown { background: #6c757d; }
 
     /* --- Print fixes for badge colors --- */
     @media print {
@@ -185,6 +246,7 @@ function badge($text, $type = "safe") {
       .badge-neutral { background: #28a745 !important; color:#fff !important; border:1px solid #28a745; }
       .badge-warning { background: #ff8800 !important; color:#fff !important; border:1px solid #ff8800; }
       .badge-failed  { background: #dc3545 !important; color:#fff !important; border:1px solid #dc3545; }
+      .badge-unknown { background: #6c757d !important; color:#fff !important; border:1px solid #6c757d; }
       
       .pdf-document { 
         box-shadow: none !important; 
@@ -249,11 +311,18 @@ function badge($text, $type = "safe") {
           </thead>
           <tbody>
             <!-- SINGLE RESULT DISPLAY - NO LOOP -->
-            <tr><td>Color (TCU)</td><td><?= htmlspecialchars($result['color']) ?></td><td><?= badge(($result['color'] <= 15) ? "Safe" : "Failed", ($result['color'] <= 15) ? "safe" : "failed") ?></td></tr>
-            <tr><td>pH</td><td><?= htmlspecialchars($result['ph_level']) ?></td><td><?= badge(($result['ph_level'] >= 6.5 && $result['ph_level'] <= 8.5) ? "Neutral" : "Failed", ($result['ph_level'] >= 6.5 && $result['ph_level'] <= 8.5) ? "neutral" : "failed") ?></td></tr>
-            <tr><td>Turbidity (NTU)</td><td><?= htmlspecialchars($result['turbidity']) ?></td><td><?= badge(($result['turbidity'] <= 5) ? "Safe" : "Warning", ($result['turbidity'] <= 5) ? "safe" : "warning") ?></td></tr>
-            <tr><td>TDS (ppm)</td><td><?= htmlspecialchars($result['tds']) ?></td><td><?= badge(($result['tds'] <= 500) ? "Safe" : "Warning", ($result['tds'] <= 500) ? "safe" : "warning") ?></td></tr>
-            <tr><td>Lead (mg/L)</td><td><?= htmlspecialchars($result['lead']) ?></td><td><?= badge(($result['lead'] <= 0.01) ? "Safe" : "Failed", ($result['lead'] <= 0.01) ? "safe" : "failed") ?></td></tr>
+            <?php
+            $colorStatus = getParameterStatus('color', $result['color']);
+            $phStatus = getParameterStatus('ph_level', $result['ph_level']);
+            $turbidityStatus = getParameterStatus('turbidity', $result['turbidity']);
+            $tdsStatus = getParameterStatus('tds', $result['tds']);
+            $leadStatus = getParameterStatus('lead', $result['lead']);
+            ?>
+            <tr><td>Color (CU)</td><td><?= htmlspecialchars($result['color']) ?></td><td><?= badge($colorStatus['text'], $colorStatus['status']) ?></td></tr>
+            <tr><td>pH</td><td><?= htmlspecialchars($result['ph_level']) ?></td><td><?= badge($phStatus['text'], $phStatus['status']) ?></td></tr>
+            <tr><td>Turbidity (NTU)</td><td><?= htmlspecialchars($result['turbidity']) ?></td><td><?= badge($turbidityStatus['text'], $turbidityStatus['status']) ?></td></tr>
+            <tr><td>Total Dissolved Solids (mg/L)</td><td><?= htmlspecialchars($result['tds']) ?></td><td><?= badge($tdsStatus['text'], $tdsStatus['status']) ?></td></tr>
+            <tr><td>Lead (mg/L)</td><td><?= htmlspecialchars($result['lead']) ?></td><td><?= badge($leadStatus['text'], $leadStatus['status']) ?></td></tr>
           </tbody>
         </table>
       <?php endif; ?>
@@ -433,6 +502,7 @@ function badge($text, $type = "safe") {
                     .badge-neutral { background: #28a745 !important; }
                     .badge-warning { background: #ff8800 !important; }
                     .badge-failed { background: #dc3545 !important; }
+                    .badge-unknown { background: #6c757d !important; }
                     table, th, td { border: 1px solid #000; border-collapse: collapse; padding: 8px; }
                     .date-generated { text-align:center; margin:5px 0 10px; font-size:14px; color:#333; font-weight:bold; }
                 </style>
