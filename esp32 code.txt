@@ -239,42 +239,47 @@ void handleRoot() {
 }
 
 // ------------------------------------------------------------------
-// CORE FUNCTIONS
+// CORE FUNCTIONS - UPDATED TO MATCH YOUR PARAMETERS
 // ------------------------------------------------------------------
 
 void calculateTDSStatus() {
-    if (tdsValue <= 8.0) strcpy(tdsStatus, "Safe");
-    else if (tdsValue > 8.0 && tdsValue <= 9.0) strcpy(tdsStatus, "Neutral");
-    else if (tdsValue > 9.0 && tdsValue <= 10.0) strcpy(tdsStatus, "Warning");
-    else strcpy(tdsStatus, "Failed");
+    if (tdsValue < 9.0) strcpy(tdsStatus, "Safe");
+    else if (tdsValue >= 9.0 && tdsValue < 10.0) strcpy(tdsStatus, "Neutral");
+    else if (tdsValue == 10.0) strcpy(tdsStatus, "Warning");
+    else if (tdsValue > 10.0) strcpy(tdsStatus, "Failed");
+    else strcpy(tdsStatus, "Unknown");
 }
 
 void calculatePHStatus() {
-    if (phValue >= 5.2 && phValue <= 6.8) strcpy(phStatus, "Safe");
-    else if (phValue > 6.8 && phValue <= 7.0 || phValue >= 5.0 && phValue < 5.2) strcpy(phStatus, "Neutral");
-    else if (phValue > 7.0 || phValue < 5.0) strcpy(phStatus, "Warning");
-    else strcpy(phStatus, "Failed"); 
+    if (phValue >= 5.0 && phValue < 6.0) strcpy(phStatus, "Safe");
+    else if (phValue >= 6.0 && phValue < 7.0) strcpy(phStatus, "Neutral");
+    else if (phValue == 7.0) strcpy(phStatus, "Warning");
+    else if (phValue < 5.0 || phValue > 7.0) strcpy(phStatus, "Failed");
+    else strcpy(phStatus, "Unknown");
 }
 
 void calculateTurbidityStatus() {
-    if (turbidityValue <= 3.0) strcpy(turbidityStatus, "Safe");
-    else if (turbidityValue > 3.0 && turbidityValue <= 4.0) strcpy(turbidityStatus, "Neutral");
-    else if (turbidityValue > 4.0 && turbidityValue <= 5.0) strcpy(turbidityStatus, "Warning");
-    else strcpy(turbidityStatus, "Failed");
+    if (turbidityValue < 4.0) strcpy(turbidityStatus, "Safe");
+    else if (turbidityValue >= 4.0 && turbidityValue < 5.0) strcpy(turbidityStatus, "Neutral");
+    else if (turbidityValue == 5.0) strcpy(turbidityStatus, "Warning");
+    else if (turbidityValue > 5.0) strcpy(turbidityStatus, "Failed");
+    else strcpy(turbidityStatus, "Unknown");
 }
 
 void calculateLeadStatus() {
-    if (leadValue <= 0.008) strcpy(leadStatus, "Safe");
-    else if (leadValue > 0.008 && leadValue <= 0.009) strcpy(leadStatus, "Neutral");
-    else if (leadValue > 0.009 && leadValue <= 0.010) strcpy(leadStatus, "Warning");
-    else strcpy(leadStatus, "Failed");
+    if (leadValue < 0.009) strcpy(leadStatus, "Safe");
+    else if (leadValue >= 0.009 && leadValue < 0.01) strcpy(leadStatus, "Neutral");
+    else if (leadValue == 0.01) strcpy(leadStatus, "Warning");
+    else if (leadValue > 0.01) strcpy(leadStatus, "Failed");
+    else strcpy(leadStatus, "Unknown");
 }
 
 void calculateColorStatus() {
-    if (tcuValue <= 8.0) strcpy(colorStatus, "Safe");
-    else if (tcuValue > 8.0 && tcuValue <= 9.0) strcpy(colorStatus, "Neutral");
-    else if (tcuValue > 9.0 && tcuValue <= 10.0) strcpy(colorStatus, "Warning");
-    else strcpy(colorStatus, "Failed");
+    if (tcuValue < 9.0) strcpy(colorStatus, "Safe");
+    else if (tcuValue >= 9.0 && tcuValue < 10.0) strcpy(colorStatus, "Neutral");
+    else if (tcuValue == 10.0) strcpy(colorStatus, "Warning");
+    else if (tcuValue > 10.0) strcpy(colorStatus, "Failed");
+    else strcpy(colorStatus, "Unknown");
 }
 
 void analyzeColor() {
@@ -288,11 +293,11 @@ void analyzeColor() {
 }
 
 void readAllSensors() {
-    // Mock values for testing
-    tdsValue = random(70, 120) / 10.0;
-    phValue = random(500, 750) / 100.0;
-    turbidityValue = random(20, 60) / 10.0;
-    leadValue = random(5, 15) / 1000.0;
+    // Mock values for testing - covering different ranges to test all statuses
+    tdsValue = random(50, 150) / 10.0; // Range: 5.0 to 15.0
+    phValue = random(300, 900) / 100.0; // Range: 3.0 to 9.0
+    turbidityValue = random(10, 80) / 10.0; // Range: 1.0 to 8.0
+    leadValue = random(5, 20) / 1000.0; // Range: 0.005 to 0.020
     
     analyzeColor();
     calculateTDSStatus();
@@ -305,16 +310,35 @@ void displaySensorReading(int index) {
     lcd.clear();
     lcd.setCursor(0, 0);
     switch(index) {
-        case 0: lcd.printf("TDS: %.1f mg/L", tdsValue); lcd.setCursor(0, 1); lcd.printf("Result: %s", tdsStatus); break;
-        case 1: lcd.printf("pH: %.2f", phValue); lcd.setCursor(0, 1); lcd.printf("Result: %s", phStatus); break;
+        case 0: 
+            lcd.printf("TDS: %.1f mg/L", tdsValue); 
+            lcd.setCursor(0, 1); 
+            lcd.printf("Status: %s", tdsStatus); 
+            break;
+        case 1: 
+            lcd.printf("pH: %.2f", phValue); 
+            lcd.setCursor(0, 1); 
+            lcd.printf("Status: %s", phStatus); 
+            break;
         case 2: 
-    // Turbidity uses 4 lines
-    lcd.setCursor(0, 0); lcd.print("Turbidity:");           // Line 1
-    lcd.setCursor(0, 1); lcd.printf("%.1f NTU", turbidityValue); // Line 2
-    lcd.setCursor(-4, 2); lcd.printf("Result: %s", turbidityStatus); // Line 3
-    break;
-        case 3: lcd.printf("Lead: %.3f mg/L", leadValue); lcd.setCursor(0, 1); lcd.printf("Result: %s", leadStatus); break;
-        case 4: lcd.printf("Color: %.1f TCU", tcuValue); lcd.setCursor(0, 1); lcd.printf("Status: %s", colorStatus); break;
+            // Turbidity uses 4 lines
+            lcd.setCursor(0, 0); 
+            lcd.print("Turbidity:");           
+            lcd.setCursor(0, 1); 
+            lcd.printf("%.1f NTU", turbidityValue); 
+            lcd.setCursor(-4, 2); 
+            lcd.printf("Status: %s", turbidityStatus); 
+            break;
+        case 3: 
+            lcd.printf("Lead: %.3f mg/L", leadValue); 
+            lcd.setCursor(0, 1); 
+            lcd.printf("Status: %s", leadStatus); 
+            break;
+        case 4: 
+            lcd.printf("Color: %.1f CU", tcuValue); 
+            lcd.setCursor(0, 1); 
+            lcd.printf("Status: %s", colorStatus); 
+            break;
     }
 }
 
