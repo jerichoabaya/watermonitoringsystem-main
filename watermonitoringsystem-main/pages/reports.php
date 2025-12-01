@@ -13,7 +13,7 @@ $filter_date  = $_POST['filter_date']  ?? ''; // yyyy-mm-dd
 $filter_month = $_POST['filter_month'] ?? ''; // yyyy-mm
 // ---------------------------
 
-// Overall status - using the same thresholds as download.php
+// Overall status - using the new thresholds (WARNING treated as PASSED)
 function overallStatus($row) {
     // Helper: convert to float or return null if not numeric
     $toFloat = function($v) {
@@ -22,24 +22,25 @@ function overallStatus($row) {
 
     $hasFailed = false;
 
-    // Evaluate parameters with the same thresholds as download.php
+    // Evaluate parameters with the new thresholds - WARNING levels are treated as PASSED
     $v = $toFloat($row['color']);
-    if ($v !== null && $v > 15) $hasFailed = true;
+    if ($v !== null && $v > 10.00) $hasFailed = true; // Only >10.00 is FAILED (==10.00 is WARNING but PASSED)
 
     $v = $toFloat($row['ph_level']);
-    if ($v !== null && ($v < 6.5 || $v > 8.5)) $hasFailed = true;
+    if ($v !== null && ($v < 5 || $v > 7)) $hasFailed = true; // Only <5 or >7 is FAILED (==7 is WARNING but PASSED)
 
     $v = $toFloat($row['turbidity']);
-    if ($v !== null && $v > 5) $hasFailed = true;
+    if ($v !== null && $v > 5) $hasFailed = true; // Only >5 is FAILED (==5 is WARNING but PASSED)
 
     $v = $toFloat($row['tds']);
-    if ($v !== null && $v > 500) $hasFailed = true;
-
-    $v = $toFloat($row['residual_chlorine']);
-    if ($v !== null && ($v < 0.2 || $v > 1.0)) $hasFailed = true;
+    if ($v !== null && $v > 10) $hasFailed = true; // Only >10 is FAILED (==10 is WARNING but PASSED)
 
     $v = $toFloat($row['lead']);
-    if ($v !== null && $v > 0.01) $hasFailed = true;
+    if ($v !== null && $v > 0.01) $hasFailed = true; // Only >0.01 is FAILED (==0.01 is WARNING but PASSED)
+
+    // Check other parameters with their existing thresholds
+    $v = $toFloat($row['residual_chlorine']);
+    if ($v !== null && ($v < 0.2 || $v > 1.0)) $hasFailed = true;
 
     $v = $toFloat($row['cadmium']);
     if ($v !== null && $v > 0.003) $hasFailed = true;
@@ -150,7 +151,7 @@ if ($filter_mode === 'day' && $filter_date) {
 // Get current date and time for report generation (Philippines time)
 $dateGenerated = date('F j, Y h:i A');
 
-// Separate passed and failed stations
+// Separate stations by status
 $passedStations = array_filter($stations, function($station) {
     return $station['_overall'] === 'PASSED';
 });
